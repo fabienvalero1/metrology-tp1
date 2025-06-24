@@ -33,7 +33,7 @@ setInterval(() => {
 
 // ---------- Routes ----------
 app.get("/hello", (req, res) => {
-  res.send("Hello metrics :wave:");
+  res.send("Hello metrics 👋");
 });
 
 app.get("/metrics", async (req, res) => {

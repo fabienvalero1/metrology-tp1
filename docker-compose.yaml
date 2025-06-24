@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   prometheus:
     image: prom/prometheus:v2.52.0
@@ -11,7 +13,16 @@ services:
     ports:
       - "9090:9090"
 
-
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "9093:9093"
+    depends_on:
+      - prometheus
   node_exporter:
     image: prom/node-exporter:v1.8.0
     ports:
@@ -23,3 +34,14 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
+
+  grafana:
+     image: grafana/grafana-oss:11.0.0
+     environment:
+       - GF_SECURITY_ADMIN_PASSWORD=admin
+     ports:
+       - "3000:3000"
+     volumes:
+       - ./grafana/provisioning:/etc/grafana/provisioning:ro
+     depends_on:
+       - prometheus
