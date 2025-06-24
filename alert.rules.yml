@@ -1,5 +1,5 @@
 groups:
-  - name: node_exporter_alerts
+  - name: node_exporter_status
     rules:
       - alert: NodeExporterUp
         expr: up{job="node"} == 1
@@ -8,4 +8,49 @@ groups:
           severity: critical
         annotations:
           summary: "Node Exporter UP (instance={{ $labels.instance }})"
-          description: "Le service node_exporter (instance {{ $labels.instance }}) ne répond depuis plus de 1 min."
+          description: "Le service node_exporter (instance {{ $labels.instance }}) est actif depuis plus de 1 minute."
+
+      - alert: NodeExporterDownInfra
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "Node Exporter DOWN (instance={{ $labels.instance }})"
+          description: "Le service node_exporter (instance {{ $labels.instance }}) est injoignable depuis plus de 2 minutes (infra team)."
+
+      - alert: NodeExporterDownDev
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: dev
+        annotations:
+          summary: "Node Exporter DOWN (instance={{ $labels.instance }})"
+          description: "Le service node_exporter (instance {{ $labels.instance }}) est injoignable depuis plus de 2 minutes (dev team)."
+
+  - name: app-alerts
+    rules:
+      - alert: AppErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total[5m])) 
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taux d'erreur élevé"
+          description: "Plus de 5 % des requêtes renvoient une erreur 5xx depuis 5 minutes."
+
+      - alert: AppTooFewRequests
+        expr: |
+          sum(rate(http_requests_total[10m])) < 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Trop peu de requêtes"
+          description: "Le nombre moyen de requêtes est inférieur à 1 req/s sur les 10 dernières minutes."
